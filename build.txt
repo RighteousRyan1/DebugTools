@@ -1,0 +1,3 @@
+displayName = Debug Items
+author = Ryan
+version = 0.0.0.1
