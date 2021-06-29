@@ -74,7 +74,7 @@ namespace DebugTools
 
                 float scale = 0.2f * Main.UIScale;
                 Vector2 measurement = FontAssets.DeathText.Value.MeasureString(info) * scale;
-                Main.spriteBatch.Draw((Texture2D)Mod.GetTexture("Assets/WhitePixel"), projectile.Center + new Vector2(10, 15) - Main.screenPosition, null, new Color(0, 165, 255) * 0.4f, 0f, Vector2.Zero, measurement + new Vector2(10, 5), SpriteEffects.None, 1f);
+                Main.spriteBatch.Draw(Mod.Assets.Request<Texture2D>("Assets/WhitePixel", AssetRequestMode.ImmediateLoad).Value, projectile.Center + new Vector2(10, 15) - Main.screenPosition, null, new Color(0, 165, 255) * 0.4f, 0f, Vector2.Zero, measurement + new Vector2(10, 5), SpriteEffects.None, 1f);
                 Main.spriteBatch.DrawString(FontAssets.DeathText.Value, info, projectile.Center + new Vector2(20, 20) - Main.screenPosition, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 1f);
                 Main.spriteBatch.DrawString(FontAssets.DeathText.Value, "Hold down LeftAlt for extra information.", projectile.Center + new Vector2(20, 0) - Main.screenPosition, Color.Green, 0f, Vector2.Zero, scale, SpriteEffects.None, 1f);
             }
@@ -122,7 +122,7 @@ namespace DebugTools
             {
                 float scale = 0.2f * Main.UIScale;
                 Vector2 measurement = FontAssets.DeathText.Value.MeasureString(info) * scale;
-                Main.spriteBatch.Draw((Texture2D)Mod.GetTexture("Assets/WhitePixel"), player.Center + new Vector2(-80, 45) - Main.screenPosition, null, player.hairColor * 0.4f, 0f, Vector2.Zero, measurement + new Vector2(10, 5), SpriteEffects.None, 1f);
+                Main.spriteBatch.Draw(Mod.Assets.Request<Texture2D>("Assets/WhitePixel", AssetRequestMode.ImmediateLoad).Value, player.Center + new Vector2(-80, 45) - Main.screenPosition, null, player.hairColor * 0.4f, 0f, Vector2.Zero, measurement + new Vector2(10, 5), SpriteEffects.None, 1f);
                 Main.spriteBatch.DrawString(FontAssets.DeathText.Value, info, player.Center + new Vector2(-75, 50) - Main.screenPosition, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 1f);
                 Main.spriteBatch.DrawString(FontAssets.DeathText.Value, "Hold down LeftAlt for extra information.", player.Center + new Vector2(-80, 35) - Main.screenPosition, Color.Chartreuse, 0f, Vector2.Zero, scale, SpriteEffects.None, 1f);
             }

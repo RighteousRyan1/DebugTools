@@ -33,7 +33,7 @@ namespace DebugTools
                 {
                     if (type == 0)
                     {
-                        throw new UsageException($"{damageAmount} is not a valid integer.");
+                        Main.NewText($"{damageAmount} is not a valid integer.");
                     }
                 }
 
@@ -69,7 +69,7 @@ namespace DebugTools
                 {
                     if (type == 0)
                     {
-                        // Main.NewText($"{velX} is not a valid integer.");
+                        Main.NewText($"{velX} is not a valid integer.");
                         return;
                     }
                 }
@@ -77,7 +77,7 @@ namespace DebugTools
                 {
                     if (type1 == 0)
                     {
-                        // Main.NewText($"{velY} is not a valid integer.");
+                        Main.NewText($"{velY} is not a valid integer.");
                         return;
                     }
                 }
@@ -105,12 +105,12 @@ namespace DebugTools
                 if (!LePlayer.iFrameDisabled)
                 {
                     LePlayer.iFrameDisabled = true;
-                    // Main.NewText("iFrames have been disabled.", Color.Red);
+                    Main.NewText("iFrames have been disabled.", Color.Red);
                 }
                 else if (LePlayer.iFrameDisabled)
                 {
                     LePlayer.iFrameDisabled = false;
-                    // Main.NewText("iFrames have been enabled.", Color.Green);
+                    Main.NewText("iFrames have been enabled.", Color.Green);
                 }
             }
         }
@@ -134,12 +134,12 @@ namespace DebugTools
                 if (!LePlayer.extraProjectileInformation)
                 {
                     LePlayer.extraProjectileInformation = true;
-                    //Main.NewText("Projectile info is now being displayed.", Color.Green);
+                    Main.NewText("Projectile info is now being displayed.", Color.Green);
                 }
                 else if (LePlayer.extraProjectileInformation)
                 {
                     LePlayer.extraProjectileInformation = false;
-                    //Main.NewText("Projectile info is no longer being displayed.", Color.Red);
+                    Main.NewText("Projectile info is no longer being displayed.", Color.Red);
                 }
             }
         }
@@ -163,12 +163,12 @@ namespace DebugTools
                 if (!LePlayer.playerInfo)
                 {
                     LePlayer.playerInfo = true;
-                    //Main.NewText("Player info is now being displayed.", Color.Green);
+                    Main.NewText("Player info is now being displayed.", Color.Green);
                 }
                 else if (LePlayer.playerInfo)
                 {
                     LePlayer.playerInfo = false;
-                    //Main.NewText("Player info is no longer being displayed.", Color.Red);
+                    Main.NewText("Player info is no longer being displayed.", Color.Red);
                 }
             }
         }
@@ -194,7 +194,7 @@ namespace DebugTools
                 {
                     if (type == 0)
                     {
-                        throw new UsageException($"{lifeAmt} is not a valid integer.");
+                        Main.NewText($"{lifeAmt} is not a valid integer.");
                     }
                 }
                 int lifeInt = 1;
@@ -243,9 +243,6 @@ namespace DebugTools
                 }
             }
         }
-        /// <summary>
-        /// Rename yourself!
-        /// </summary>
         public class Rename : ModCommand
         {
             public override CommandType Type
@@ -492,6 +489,106 @@ namespace DebugTools
         public static int newBodyFrame;
         public static int newLegFrame;
         public static bool canModify;
+
+        public class TimeCommand : ModCommand
+        {
+            public override CommandType Type
+               => CommandType.Chat;
+
+            public override string Command
+                => "time";
+
+            public override string Usage
+                => "/time <day/night> <ticks>";
+
+            public override string Description
+                => "set the time (morning, latemorning, noon, afternoon, dusk, midnight can be alternatives for <day/night>, then <ticks> is irrelevant)";
+
+            public override void Action(CommandCaller caller, string input, string[] args)
+            {
+                if (args.Length >= 3)
+                {
+                    Main.NewText($"Too many arguments.", Color.Red);
+                    return;
+                }
+                if (args[0] == "day")
+                    Main.dayTime = true;
+                else if (args[0] == "night")
+                    Main.dayTime = false;
+
+                string timePass = args[0];
+
+                if (timePass.ToLower() == "morning")
+                {
+                    Main.dayTime = true;
+                    Main.time = 0;
+                    return;
+                }
+                if (timePass.ToLower() == "latemorning")
+                {
+                    Main.dayTime = true;
+                    Main.time = 9000;
+                    return;
+                }
+                if (timePass.ToLower() == "noon")
+                {
+                    Main.dayTime = true;
+                    Main.time = Main.dayLength / 2;
+                    return;
+                }
+                if (timePass.ToLower() == "afternoon")
+                {
+                    Main.dayTime = true;
+                    Main.time = (int)(Main.dayLength * 0.75f);
+                    return;
+                }
+                if (timePass.ToLower() == "dusk")
+                {
+                    Main.dayTime = false;
+                    Main.time = 0;
+                    return;
+                }
+                if (timePass.ToLower() == "midnight")
+                {
+                    Main.dayTime = false;
+                    Main.time = Main.nightLength / 2;
+                    return;
+                }
+
+                bool canParse = int.TryParse(args[1], out int time);
+
+                if (canParse)
+                {
+                    Main.time = time;
+                    return;
+                }
+            }
+        }
+        public class UseTimeCommand : ModCommand
+        {
+            public override CommandType Type
+               => CommandType.Chat;
+
+            public override string Command
+                => "useTime";
+
+            public override string Usage
+                => "/useTime <ticks>";
+
+            public override string Description
+                => "change your held item's useTime and useAnimation";
+
+            public override void Action(CommandCaller caller, string input, string[] args)
+            {
+                if (int.TryParse(args[0], out int usetime))
+                {
+                    caller.Player.HeldItem.useTime = usetime;
+                    caller.Player.HeldItem.useAnimation = usetime;
+                }
+                else if (args[0].ToLower() == "setdefaults")
+                    caller.Player.HeldItem.SetDefaults(caller.Player.HeldItem.type);
+            }
+        }
     }
     public class ModifyBodyFramePlayer : ModPlayer
     {
