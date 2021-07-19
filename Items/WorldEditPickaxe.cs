@@ -135,7 +135,7 @@ namespace DebugTools.Items
             }
             if (!player.controlUseItem)
             {
-                lastMousePos = Main.MouseWorld;
+                lastMousePos = new Vector2(Player.tileTargetX, Player.tileTargetY) * 16;
                 blockBreakRect = new();
             }
             wasUsingThisItem = player.controlUseItem;
@@ -145,8 +145,8 @@ namespace DebugTools.Items
             int x = (int)lastMousePos.X;
             int y = (int)lastMousePos.Y;
 
-            int xDiff = (int)Main.MouseWorld.X - x;
-            int yDiff = (int)Main.MouseWorld.Y - y;
+            int xDiff = Player.tileTargetX * 16 - x;
+            int yDiff = Player.tileTargetY * 16 - y;
 
             blockBreakRect = new(x, y, 1, 1);
 
