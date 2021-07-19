@@ -1,11 +1,17 @@
+using DebugTools.Items;
 using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
+using Terraria.GameContent;
+using Terraria.GameContent.Events;
 using Terraria.ID;
 using Terraria.ModLoader;
-using static Terraria.ModLoader.ModContent;
+using ReLogic.Graphics;
+using System.Text.RegularExpressions;
+using System.Text;
 
 namespace DebugTools
 {
@@ -200,6 +206,7 @@ namespace DebugTools
                 int lifeInt = 1;
                 if (args.Length >= 2)
                 {
+					Main.NewText($"Life has been set to {args[1]}");
                     lifeInt = int.Parse(args[1]);
                 }
                 player.statLifeMax = type;
@@ -314,6 +321,7 @@ namespace DebugTools
             public override void Action(CommandCaller caller, string input, string[] args)
             {
                 spawnsStopped = !spawnsStopped;
+				Main.NewText(spawnsStopped ? "Spawns have been stopped." : "Spawns have been turned back on.");
             }
         }
         public class NPCSummon : ModCommand
@@ -343,7 +351,7 @@ namespace DebugTools
 
                 if (!canID)
                 {
-                    Main.NewText("Unknown NPC: " + name);
+                    Main.NewText($"Unknown NPC: {name}");
                 }
 
                 int amount = 1;
@@ -357,6 +365,7 @@ namespace DebugTools
 				(int)(Main.MouseWorld.X + Main.rand.NextFloat(-10 * amount, 10 * amount)), 
 				(int)(Main.MouseWorld.Y + Main.rand.NextFloat(0, -10 * amount)), 
 				id);
+				Main.NewText(amount == 1 ? $"Spawned {name} {amount} time." : $"Spawned {name} {amount} times.");
             }
         }
 		public class ItemCommand : ModCommand
@@ -426,32 +435,16 @@ namespace DebugTools
 
             public override void Action(CommandCaller caller, string input, string[] args)
             {
+				int butcherAmount = 0;
                 foreach (var npc in Main.npc)
                 {
                     if (npc.active)
                     {
+						butcherAmount++;
                         npc.StrikeNPC(npc.lifeMax + 50, 0, 0);
                     }
                 }
-            }
-        }
-        public class ScroogeMcDuck : ModCommand
-        {
-            public override CommandType Type
-               => CommandType.Chat;
-
-            public override string Command
-                => "scrooge";
-
-            public override string Usage
-                => "/scrooge";
-
-            public override string Description
-                => "here comes the money";
-
-            public override void Action(CommandCaller caller, string input, string[] args)
-            {
-                caller.Player.QuickSpawnItem(ItemID.PlatinumCoin, 999);
+				Main.NewText($"Butchered {butcherAmount} NPCs.");
             }
         }
         public class ModifyBodyFrames : ModCommand
@@ -489,7 +482,6 @@ namespace DebugTools
         public static int newBodyFrame;
         public static int newLegFrame;
         public static bool canModify;
-
         public class TimeCommand : ModCommand
         {
             public override CommandType Type
@@ -502,7 +494,7 @@ namespace DebugTools
                 => "/time <day/night> <ticks>";
 
             public override string Description
-                => "set the time (morning, latemorning, noon, afternoon, dusk, midnight can be alternatives for <day/night>, then <ticks> is irrelevant)";
+                => "set the time (dawn, latemorning, noon, afternoon, dusk, midnight can be alternatives for <day/night>, then <ticks> is irrelevant)";
 
             public override void Action(CommandCaller caller, string input, string[] args)
             {
@@ -518,48 +510,54 @@ namespace DebugTools
 
                 string timePass = args[0];
 
-                if (timePass.ToLower() == "morning")
+                if (timePass.ToLower() == "dawn")
                 {
                     Main.dayTime = true;
                     Main.time = 0;
+					Main.NewText($"Changed the time to {Main.time}.");
                     return;
                 }
                 if (timePass.ToLower() == "latemorning")
                 {
                     Main.dayTime = true;
                     Main.time = 9000;
+					Main.NewText($"Changed the time to {Main.time}.");
                     return;
                 }
                 if (timePass.ToLower() == "noon")
                 {
                     Main.dayTime = true;
                     Main.time = Main.dayLength / 2;
+					Main.NewText($"Changed the time to {Main.time}.");
                     return;
                 }
                 if (timePass.ToLower() == "afternoon")
                 {
                     Main.dayTime = true;
                     Main.time = (int)(Main.dayLength * 0.75f);
+					Main.NewText($"Changed the time to {Main.time}.");
                     return;
                 }
                 if (timePass.ToLower() == "dusk")
                 {
                     Main.dayTime = false;
                     Main.time = 0;
+					Main.NewText($"Changed the time to {Main.time}.");
                     return;
                 }
                 if (timePass.ToLower() == "midnight")
                 {
                     Main.dayTime = false;
                     Main.time = Main.nightLength / 2;
+					Main.NewText($"Changed the time to {Main.time}.");
                     return;
                 }
-
                 bool canParse = int.TryParse(args[1], out int time);
 
                 if (canParse)
                 {
                     Main.time = time;
+					Main.NewText($"Changed the time to {Main.time}.");
                     return;
                 }
             }
@@ -584,9 +582,171 @@ namespace DebugTools
                 {
                     caller.Player.HeldItem.useTime = usetime;
                     caller.Player.HeldItem.useAnimation = usetime;
+					
+					Main.NewText($"Changed your held item's useTime and useAnimation to {usetime} ticks.");
                 }
                 else if (args[0].ToLower() == "setdefaults")
+				{
                     caller.Player.HeldItem.SetDefaults(caller.Player.HeldItem.type);
+					Main.NewText($"Changed your held item's useTime and useAnimation back to their defaults.");
+				}
+            }
+        }
+        public class ModifyWeather : ModCommand
+        {
+            public override CommandType Type
+               => CommandType.Chat;
+
+            public override string Command
+                => "weather";
+
+            public override string Usage
+                => "/weather <clear/sun, rain, storm, sandstorm>";
+
+            public override string Description
+                => "begin/end weather";
+
+            public override void Action(CommandCaller caller, string input, string[] args)
+            {
+                string weather = args[0];
+
+                if (weather.ToLower() == "sun" || weather.ToLower() == "clear")
+                {
+                    Main.maxRaining = 0f;
+                    Main.rainTime = 0;
+                    Main.raining = false;
+                    Sandstorm.Happening = false;
+					Main.NewText($"Weather has been cleared.");
+					return;
+                }
+                if (weather.ToLower() == "rain")
+                {
+                    Main.maxRaining = Main.rand.NextFloat(0.01f, 0.2f);
+                    Main.rainTime = Main.rand.Next(10000, 20000);
+                    Main.raining = true;
+					Main.NewText($"Weather has been set to rain.");
+					return;
+                }
+                if (weather.ToLower() == "storm")
+                {
+                    Main.maxRaining = Main.rand.NextFloat(0.5f, 1f);
+                    Main.rainTime = Main.rand.Next(10000, 20000);
+                    Main.raining = true;
+					Main.NewText($"Weather has been set to thunderstorm.");
+					return;
+                }
+                if (weather.ToLower() == "sandstorm")
+                {
+                    Sandstorm.Happening = true;
+                    Sandstorm.IntendedSeverity = Main.rand.NextFloat();
+					Main.NewText($"A sandstorm has been started.");
+					return;
+                }
+            }
+        }
+        public class SpawnHellevator : ModCommand
+        {
+            public override CommandType Type
+                => CommandType.Chat;
+
+            public override string Command
+                => "spawnHellevator";
+
+            public override string Usage
+                => "/spawnHellevator <width>";
+
+            public override string Description
+                => "spawn a hellevator";
+
+            public override void Action(CommandCaller caller, string input, string[] args)
+            {
+                if (int.TryParse(args[0], out int width))
+                {
+                    for (int i = (int)caller.Player.Center.X / 16 - width; i < (int)caller.Player.Center.X / 16 + width; i++)
+                    {
+                        for (int j = (int)caller.Player.Center.Y / 16; j < Main.maxTilesY - 175; j++)
+                        {
+                            var tile = Main.tile[i, j];
+
+                            tile.IsActive = false;
+                            WorldGen.SquareTileFrame(i, j);
+
+                            tile.LiquidAmount = 0;
+                            tile.LiquidType = 0;
+                        }
+                    }
+					Main.NewText($"Spawned a hellevator with a width of {width}.");
+                }
+                else
+                    Main.NewText($"'{args[0]}' is not a valid argument.", Color.Red);
+            }
+        }
+        public class TPCommand : ModCommand
+        {
+            public override CommandType Type
+                => CommandType.Chat;
+
+            public override string Command
+                => "tp";
+
+            public override string Usage
+                => "/tp";
+
+            public override string Description
+                => "teleport to a location <x, y>, or <hell, dungeon, spawn, space, caverns, beachleft, beachright>\nDo note that these should be TILE COORDINATES";
+
+            public override void Action(CommandCaller caller, string input, string[] args)
+            {
+                var player = caller.Player;
+
+                if (args.Length == 0)
+                    Main.NewText($"Please provide arguments.");
+                if (int.TryParse(args[0], out int x))
+                {
+                    if (int.TryParse(args[1], out int y))
+                    {
+                        player.Center = new Vector2(x, y) * 16;
+                    }
+                }
+                else
+                {
+                    var tpLoc = args[0];
+                    if (tpLoc == "hell")
+                    {
+                        player.Bottom = new Vector2(Main.rand.Next(0, Main.maxTilesX), Main.maxTilesY - 150) * 16;
+						Main.NewText($"Teleported to hell.");
+                    }
+                    else if (tpLoc == "dungeon")
+                    {
+                        player.Bottom = new Vector2(Main.dungeonX, Main.dungeonY) * 16;
+						Main.NewText($"Teleported to the dungeon.");
+                    }
+                    else if (tpLoc == "spawn")
+                    {
+                        player.Bottom = new Vector2(Main.spawnTileX, Main.spawnTileY) * 16;
+						Main.NewText($"Teleported to spawn.");
+                    }
+                    else if (tpLoc == "space")
+                    {
+                        player.Bottom = new Vector2(Main.rand.Next(0, Main.maxTilesX), 100) * 16;
+						Main.NewText($"Teleported to space.");
+                    }
+                    else if (tpLoc == "caverns")
+                    {
+                        player.Bottom = new Vector2(Main.rand.Next(0, Main.maxTilesX), (float)Main.rockLayer) * 16;
+						Main.NewText($"Teleported to the caverns.");
+                    }
+                    else if (tpLoc == "beachleft")
+                    {
+                        player.Bottom = new Vector2(110, player.Center.Y) * 16;
+						Main.NewText($"Teleported to the left-most beach.");
+                    }
+                    else if (tpLoc == "beachright")
+                    {
+                        player.Bottom = new Vector2(Main.maxTilesX - 110, player.Center.Y) * 16;
+						Main.NewText($"Teleported to the right-most beach.");
+                    }
+                }
             }
         }
     }
@@ -601,5 +761,34 @@ namespace DebugTools
                 drawInfo.drawPlayer.bodyFrame.Y = drawInfo.drawPlayer.bodyFrame.Height * DebugTools.newBodyFrame;
             }
         }
+    }
+
+    public class Hooking : ModSystem
+    {
+        public override void OnModLoad()
+        {
+            On.Terraria.Main.DrawInterface_0_InterfaceLogic1 += DrawPickRect;
+        }
+
+        private void DrawPickRect(On.Terraria.Main.orig_DrawInterface_0_InterfaceLogic1 orig)
+        {
+            var sb = Main.spriteBatch;
+            sineWaveVal += 0.025f;
+            bool eitherNeg = WorldEditPickaxe.blockBreakRect.Width < 0 || WorldEditPickaxe.blockBreakRect.Height < 0;
+            var rectScreen = new Rectangle(WorldEditPickaxe.blockBreakRect.X - (int)Main.screenPosition.X, WorldEditPickaxe.blockBreakRect.Y - (int)Main.screenPosition.Y, WorldEditPickaxe.blockBreakRect.Width, WorldEditPickaxe.blockBreakRect.Height);
+            sb.Draw(TextureAssets.MagicPixel.Value, WorldEditPickaxe.blockBreakRect, null, Color.White * (float)Math.Abs(Math.Sin(sineWaveVal)), 0f, Vector2.Zero, default, 0f);
+            sb.Draw(TextureAssets.MagicPixel.Value, eitherNeg ? new Rectangle(-500, -500, 0, 0) : rectScreen, null, Color.White * (float)(Math.Abs(Math.Sin(sineWaveVal)) + 0.3f) * 0.5f, 0f, Vector2.Zero, default, 0f);
+            string SplitCamelCase(string input)
+            {
+                return Regex.Replace(input, "([A-Z])", " $1", RegexOptions.Compiled).Trim();
+            }
+            if (Main.LocalPlayer.HeldItem.ModItem is WorldEditPickaxe wePick)
+            {
+                sb.DrawString(FontAssets.MouseText.Value, $"{SplitCamelCase(wePick.Mode.ToString())}", Main.MouseScreen + new Vector2(20), Color.White);
+            }
+            orig();
+        }
+
+        float sineWaveVal;
     }
 }
